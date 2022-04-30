@@ -1,4 +1,8 @@
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" automatic-verilog 变量配置
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:atv_snippet_author=$USER
+let g:atv_snippet_st_pos = 0    " 可配置生成代码段的前缀空格数
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 环境变量配置
@@ -354,16 +358,14 @@ nnoremap <leader>r :RtlTree<CR>
 " set comment line
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "映射F4快捷键
-"map <F4> :call AutoComment()<CR>
-map  <F4> :call <SNR>78_AutoComment()<CR>
-imap <F4> <ESC>:call <SNR>78_AutoComment()<CR>i
+map  <F4> <Plug>Atv_Snippet_AutoComment;
+imap <F4> <ESC><Plug>Atv_Snippet_AutoComment;<CR>i
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " set comment block
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 "映射F5快捷键
-"map <F5> <ESC>:call AutoComment2()<ESC>
-vmap <F5> <ESC>:call <SNR>78_AutoComment2()<ESC>
+vmap <F5> <Plug>Atv_Snippet_AutoComment2;
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 生成时间

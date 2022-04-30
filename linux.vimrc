@@ -2,6 +2,13 @@
 " automatic-verilog 变量配置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:atv_snippet_author=$USER
+let g:atv_snippet_author =$USER
+let g:atv_snippet_company='NB'
+let g:atv_snippet_project ='Logic'
+let g:atv_snippet_device =''
+let g:atv_snippet_email  =''
+let g:atv_snippet_website=''
+
 let g:atv_snippet_st_pos = 0    " 可配置生成代码段的前缀空格数
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

@@ -145,7 +145,7 @@ else
     let g:plug_home='~/.vim/plugged'
 endif
 
-silent! call plug#begin('~/.vim/plugged')
+silent! call plug#begin()
 
 Plug 'vim-scripts/L9'
 Plug 'vim-scripts/txt.vim'

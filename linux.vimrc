@@ -261,7 +261,8 @@ map g/ <Plug>(incsearch-stay)
 " 插件配置  vim-easymotion
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 let g:EasyMotion_smartcase = 1
-nnoremap <leader>w <Plug>(easymotion-overwin-w)
+map <leader>w <Plug>(easymotion-bd-w)
+nmap <leader>w <Plug>(easymotion-overwin-w)
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 插件配置  indentLine

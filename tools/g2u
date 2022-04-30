@@ -1,0 +1,68 @@
+#!/bin/bash 
+
+## 
+## Convert file from GB2312 to UTF-8
+## 
+
+function Convert() {
+	path="$1"
+	
+	if ! file "$path" | grep -q " text" >/dev/null ; then
+		return
+	fi
+	
+	if file "$path" | grep -q "UTF-8 Unicode" >/dev/null ; then
+		return
+	fi
+	
+	if file "$path" | grep -q "ISO-8859" >/dev/null ; then
+		iconv -f gbk $opt -t utf-8 "$path" > /tmp/$$.tmp
+		if [ $? -eq 0 ] ; then
+			dos2unix /tmp/$$.tmp
+			mv -f /tmp/$$.tmp "$path"
+			echo "Converting $path (gbk --> utf-8) ... Success"
+		else
+			file $path
+			echo -e "Converting $path (gbk --> utf-8) ... Failed!\n"
+		fi
+	fi
+}
+
+function travFolderConvert() {
+	echo $1
+	flist=`ls $1`
+	cd $1
+	for f in $flist
+	do
+		if test -d $f ; then
+			travFolderConvert $f
+		else
+			#echo "file:$f"
+			Convert $f
+		fi
+	done
+	cd ../
+}
+
+function gbk2utf8() {
+	path="$1"
+
+	if [ -z "$path" ]; then
+		echo "Usage: $0 <file or dir> [force]"
+	elif [ ! -e "$path" ] ; then
+		echo "ERROR: destination: $path does not exist."
+	fi
+	
+	if [ -f "$path" ] ; then
+		Convert $path
+	elif [ -d "$path" ] ; then
+		travFolderConvert $path
+	fi
+}
+
+unset opt
+if [ "$2" = "force" ]; then
+	opt="-c -s"
+fi
+
+gbk2utf8 $1

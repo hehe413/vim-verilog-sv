@@ -1,0 +1,74 @@
+#!/bin/bash 
+
+## 
+## convert file from UTF-8 to GB2312
+## 
+
+function Convert() {
+	path="$1"
+	
+	if ! file "$path" | grep -q " text" >/dev/null ; then
+		return
+	fi
+	
+	if file "$path" | grep -q "ISO-8859" >/dev/null ; then
+		return
+	fi
+	
+	if file "$path" | grep -q "UTF-8 Unicode (with BOM)" >/dev/null ; then
+		#echo "with bom"
+		sed 's/^\xEF\xBB\xBF//' < "$path" > /tmp/$$.tmp
+		mv -f /tmp/$$.tmp "$path"
+	fi
+	
+	if file "$path" | grep -q "UTF-8 Unicode" >/dev/null ; then
+		iconv -f utf-8 $opt -t gbk "$path" > /tmp/$$.tmp
+		if [ $? -eq 0 ] ; then
+			unix2dos /tmp/$$.tmp
+			mv -f /tmp/$$.tmp "$path"
+			echo "Converting $path (utf-8 --> gbk) ... Success"
+		else
+			file $path
+			echo -e "Converting $path (utf-8 --> gbk) ... Failed!\n"
+		fi
+	fi
+}
+
+function travFolderConvert() {
+	echo $1
+	flist=`ls $1`
+	cd $1
+	for f in $flist
+	do
+		if test -d $f ; then
+			travFolderConvert $f
+		else
+			#echo "file:$f"
+			Convert $f
+		fi
+	done
+	cd ../
+}
+
+function utf82gbk() {
+	path="$1"
+
+	if [ -z "$path" ]; then
+		echo "Usage: $0 <file or dir> [force]"
+	elif [ ! -e "$path" ] ; then
+		echo "ERROR: destination: $path does not exist."
+	fi
+	
+	if [ -f "$path" ] ; then
+		Convert $path
+	elif [ -d "$path" ] ; then
+		travFolderConvert $path
+	fi
+}
+
+unset opt
+if [ "$2" = "force" ]; then
+	opt="-c -s"
+fi
+
+utf82gbk $1

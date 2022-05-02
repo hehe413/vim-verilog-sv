@@ -9,7 +9,7 @@ let g:atv_snippet_device =''
 let g:atv_snippet_email  =''
 let g:atv_snippet_website=''
 
-let g:atv_snippet_st_pos = 0    " 可配置生成代码段的前缀空格数
+let g:atv_snippet_st_pos = 0        " 可配置生成代码段的前缀空格数
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 环境变量配置
@@ -28,69 +28,69 @@ endif
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 通用设置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let mapleader = ","      " 定义<leader>键
-set nocompatible         " 设置不兼容原始vi模式
-filetype on              " 设置开启文件类型侦测
-filetype plugin on       " 设置加载对应文件类型的插件
-set noeb                 " 关闭错误的提示
-syntax enable            " 开启语法高亮功能
-syntax on                " 自动语法高亮
-set t_Co=256             " 开启256色支持
-set cmdheight=2          " 设置命令行的高度
-set showcmd              " select模式下显示选中的行数
-set ruler                " 总是显示光标位置
-set laststatus=2         " 总是显示状态栏
-set number               " 开启行号显示
-set cursorline           " 高亮显示当前行
-set whichwrap+=<,>,h,l   " 设置光标键跨行
+let mapleader = ","             " 定义<leader>键
+set nocompatible                " 设置不兼容原始vi模式
+filetype on                     " 设置开启文件类型侦测
+filetype plugin on              " 设置加载对应文件类型的插件
+set noeb                        " 关闭错误的提示
+syntax enable                   " 开启语法高亮功能
+syntax on                       " 自动语法高亮
+set t_Co=256                    " 开启256色支持
+set cmdheight=2                 " 设置命令行的高度
+set showcmd                     " select模式下显示选中的行数
+set ruler                       " 总是显示光标位置
+set laststatus=2                " 总是显示状态栏
+set number                      " 开启行号显示
+set cursorline                  " 高亮显示当前行
+set whichwrap+=<,>,h,l          " 设置光标键跨行
 set virtualedit=block,onemore   " 允许光标出现在最后一个字符的后面
-set mouse=a              " 鼠标使能
-"winpos 632 5            " 设定窗口位置       
-set lines=32 columns=128 " 设定窗口大小  
-set noshowmode           " 不显示左下角提示
-set vb t_vb=		     " 关闭警告音
-"set guioptions-=m  	 " 不显示菜单栏	
-set guioptions-=T        " 不显示快捷图标
-set background=dark		 " 背景
+set mouse=a                     " 鼠标使能
+"winpos 632 5                   " 设定窗口位置       
+set lines=32 columns=128        " 设定窗口大小  
+set noshowmode                  " 不显示左下角提示
+set vb t_vb=		            " 关闭警告音
+"set guioptions-=m  	        " 不显示菜单栏	
+set guioptions-=T               " 不显示快捷图标
+set background=dark		        " 背景
 let g:onedark_termcolors=256
-colorscheme monokai		 " 主题
-set cuc cul              " highlight current col and row
-set shell=sh             " 加快gvim,gvimdiff打开文件的速度
+colorscheme monokai		        " 主题
+set cuc cul                     " highlight current col and row
+set shell=sh                    " 加快gvim,gvimdiff打开文件的速度
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 代码缩进和排版
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set autoindent           " 设置自动缩进
-set cindent              " 设置使用C/C++语言的自动缩进方式
-set cinoptions=g0,:0,N-s,(0    " 设置C/C++语言的具体缩进方式
-"set smartindent          " 智能的选择对其方式
-filetype indent on       " 自适应不同语言的智能缩进
-set expandtab            " 将制表符扩展为空格
-set tabstop=4            " 设置编辑时制表符占用空格数
-set shiftwidth=4         " 设置格式化时制表符占用空格数
-set softtabstop=4        " 设置4个空格为制表符
-set smarttab             " 在行和段开始处使用制表符
-set nowrap               " 禁止折行
-set backspace=2          " 使用回车键正常处理indent,eol,start等
+set autoindent                  " 设置自动缩进
+set cindent                     " 设置使用C/C++语言的自动缩进方式
+set cinoptions=g0,:0,N-s,(0     " 设置C/C++语言的具体缩进方式
+"set smartindent                " 智能的选择对其方式
+filetype indent on              " 自适应不同语言的智能缩进
+set expandtab                   " 将制表符扩展为空格
+set tabstop=4                   " 设置编辑时制表符占用空格数
+set shiftwidth=4                " 设置格式化时制表符占用空格数
+set softtabstop=4               " 设置4个空格为制表符
+set smarttab                    " 在行和段开始处使用制表符
+set nowrap                      " 禁止折行
+set backspace=2                 " 使用回车键正常处理indent,eol,start等
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 代码补全
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set wildmenu             " vim自身命名行模式智能补全
-set completeopt-=preview " 补全时不显示窗口，只显示补全列表
+set wildmenu                    " vim自身命名行模式智能补全
+set completeopt-=preview        " 补全时不显示窗口，只显示补全列表
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 搜索设置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set hlsearch            " 高亮显示搜索结果
-set incsearch           " 开启实时搜索功能
-set ignorecase          " 搜索时大小写不敏感
+set hlsearch                    " 高亮显示搜索结果
+set incsearch                   " 开启实时搜索功能
+set ignorecase                  " 搜索时大小写不敏感
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 代码折叠
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-set foldmethod=syntax   " 设置基于语法进行代码折叠
-set nofoldenable        " 关闭折叠代码
+set foldmethod=syntax           " 设置基于语法进行代码折叠
+set nofoldenable                " 关闭折叠代码
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 缓存设置
@@ -105,12 +105,12 @@ else
 	set undodir=~/.vim/TempFiles/undodir
 endif
 
-set backup              " 设置备份
-set swapfile            " 允许生成临时文件
-set undofile            " 允许生成Undo文件
-set autoread            " 文件在vim之外修改过，自动重新读入
-set autowrite           " 设置自动保存
-set confirm             " 在处理未保存或只读文件的时候，弹出确认
+set backup                      " 设置备份
+set swapfile                    " 允许生成临时文件
+set undofile                    " 允许生成Undo文件
+set autoread                    " 文件在vim之外修改过，自动重新读入
+set autowrite                   " 设置自动保存
+set confirm                     " 在处理未保存或只读文件的时候，弹出确认
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 编码设置
@@ -211,6 +211,7 @@ nnoremap <leader>d :bd<CR>
 let g:airline_theme="onedark"
 let g:airline_powerline_fonts = 1
 let g:airline#extensions#tabline#enabled = 1
+let g:airline#extensions#tabline#buffer_nr_show = 1
 if !exists('g:airline_symbols')
     let g:airline_symbols = {}
 endif

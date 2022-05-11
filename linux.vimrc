@@ -274,6 +274,7 @@ nnoremap <leader><leader>il :IndentLinesToggle<CR>
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 插件配置  LeaderF
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+"If you want to search files in another folder, e.g. foo, you an use Leaderf file foo
 "nnoremap <leader>f :LeaderfFile<CR>    " 插件内默认已配置
 let g:Lf_WildIgnore = {
             \ 'dir': ['.svn','.git','.hg','.vscode','.deepinwine','.oh-my-zsh'],

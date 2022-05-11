@@ -15,14 +15,14 @@ let g:atv_snippet_st_pos = 0        " 可配置生成代码段的前缀空格数
 " 环境变量配置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if(has('win32') || has('win64'))
-	" 对ctrl-v等快捷键做了映射
-	" source $VIMRUNTIME/mswin.vim
-	" behave mswin
-	set runtimepath+=$VIM/.vim
-	set runtimepath+=$VIM/vimfiles/autoload/plug.vim
-	"source $VIM/vimfiles/.vimrc
+    " 对ctrl-v等快捷键做了映射
+    " source $VIMRUNTIME/mswin.vim
+    " behave mswin
+    set runtimepath+=$VIM/.vim
+    set runtimepath+=$VIM/vimfiles/autoload/plug.vim
+    "source $VIM/vimfiles/.vimrc
 else
-	"set runtimepath+=~/.vim/YouCompleteMe
+    "set runtimepath+=~/.vim/YouCompleteMe
 endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -48,12 +48,12 @@ set mouse=a                     " 鼠标使能
 "winpos 632 5                   " 设定窗口位置       
 set lines=32 columns=128        " 设定窗口大小  
 set noshowmode                  " 不显示左下角提示
-set vb t_vb=		        " 关闭警告音
-"set guioptions-=m  	        " 不显示菜单栏	
+set vb t_vb=                    " 关闭警告音
+"set guioptions-=m              " 不显示菜单栏    
 set guioptions-=T               " 不显示快捷图标
-set background=dark		" 背景
+set background=dark             " 背景
 let g:onedark_termcolors=256
-colorscheme monokai		" 主题
+colorscheme monokai             " 主题
 set cuc cul                     " highlight current col and row
 set shell=sh                    " 加快gvim,gvimdiff打开文件的速度
 
@@ -96,13 +96,13 @@ set nofoldenable                " 关闭折叠代码
 " 缓存设置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if(has('win32') || has('win64'))
-	set backupdir=$VIM/vimfiles/TempFiles/backupdir
-	set directory=$VIM/vimfiles/TempFiles/swapdir
-	set undodir=$VIM/vimfiles/TempFiles/undodir
+    set backupdir=$VIM/vimfiles/TempFiles/backupdir
+    set directory=$VIM/vimfiles/TempFiles/swapdir
+    set undodir=$VIM/vimfiles/TempFiles/undodir
 else
-	set backupdir=~/.vim/TempFiles/backupdir
-	set directory=~/.vim/TempFiles/swapdir
-	set undodir=~/.vim/TempFiles/undodir
+    set backupdir=~/.vim/TempFiles/backupdir
+    set directory=~/.vim/TempFiles/swapdir
+    set undodir=~/.vim/TempFiles/undodir
 endif
 
 set backup                      " 设置备份
@@ -111,17 +111,17 @@ set undofile                    " 允许生成Undo文件
 set autoread                    " 文件在vim之外修改过，自动重新读入
 set autowrite                   " 设置自动保存
 set confirm                     " 在处理未保存或只读文件的时候，弹出确认
-set noautochdir			" 不自动切换当前工作目录，可能会导致gf无法跳转
+set noautochdir            " 不自动切换当前工作目录，可能会导致gf无法跳转
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 编码设置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if(has('win32') || has('win64'))
-	set guifont=DroidSansMono\ NF:h12
+    set guifont=DroidSansMono\ NF:h12
 elseif(has('gui_macvim'))
-	set guifont=DroidSansMono\ Nerd\ Font\ Mono:h18
+    set guifont=DroidSansMono\ Nerd\ Font\ Mono:h18
 else
-	set guifont=DroidSansMono\ Nerd\ Font\ Mono\ 12
+    set guifont=DroidSansMono\ Nerd\ Font\ Mono\ 12
 endif
 
 "显示和内部处理的编码
@@ -191,9 +191,9 @@ nnoremap <leader>e :edit $MYVIMRC<CR>
 
 " 查看help文件
 if(has('win32') || has('win64'))
-	nnoremap <leader>h :edit $VIM/help.md<CR>
+    nnoremap <leader>h :edit $VIM/help.md<CR>
 else
-	nnoremap <leader>h :edit ~/.vim/help.md<CR>
+    nnoremap <leader>h :edit ~/.vim/help.md<CR>
 endif
 
 " 重新加载vimrc文件
@@ -406,7 +406,7 @@ func Setfilehead()
     call append(15, '// -----------------------------------------------------------------------------')
     call append(16, '// ')
     call append(17, '// ********************************************************************************')
-	call append(18, '')
+    call append(18, '')
 endfunc
 
 "映射F9快捷键，生成后跳转至第9行，然后使用o进入vim的插入模式

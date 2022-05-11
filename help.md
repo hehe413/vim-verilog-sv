@@ -9,6 +9,7 @@
 | `<leader>r`              | 打开/关闭RtlTree                                                                |
 | `<leader>w`              | 单词跳转                                                                        |
 | `<leader>f`              | 搜索~目录下的文件                                                               |
+| `<leader>b`              | 搜索当前打开的buffer                                                            |
 | `<leader>k`              | 搜索当前目录下的文本                                                            |
 | `<F2>`                   | (预留)                                                                          |
 | `<F3>`                   | (预留，和黄区的snipaste快捷键冲突)                                              |

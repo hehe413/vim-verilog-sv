@@ -111,13 +111,14 @@ set undofile                    " 允许生成Undo文件
 set autoread                    " 文件在vim之外修改过，自动重新读入
 set autowrite                   " 设置自动保存
 set confirm                     " 在处理未保存或只读文件的时候，弹出确认
-set noautochdir            " 不自动切换当前工作目录，可能会导致gf无法跳转
+set noautochdir                 " 不自动切换当前工作目录，可能会导致gf无法跳转
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 编码设置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if(has('win32') || has('win64'))
-    set guifont=DroidSansMono\ NF:h12
+    set guifont=DroidSansMono_Nerd_Font_Mono:h12
+    "set guifont=DroidSansMono\ NF:h12
 elseif(has('gui_macvim'))
     set guifont=DroidSansMono\ Nerd\ Font\ Mono:h18
 else

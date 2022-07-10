@@ -50,7 +50,7 @@ set lines=32 columns=128        " 设定窗口大小
 set noshowmode                  " 不显示左下角提示
 set vb t_vb=                    " 关闭警告音
 "set guioptions-=m              " 不显示菜单栏    
-set guioptions-=T               " 不显示快捷图标
+"set guioptions-=T               " 不显示快捷图标
 set background=dark             " 背景
 let g:onedark_termcolors=256
 colorscheme monokai             " 主题
@@ -111,14 +111,13 @@ set undofile                    " 允许生成Undo文件
 set autoread                    " 文件在vim之外修改过，自动重新读入
 set autowrite                   " 设置自动保存
 set confirm                     " 在处理未保存或只读文件的时候，弹出确认
-set noautochdir                 " 不自动切换当前工作目录，可能会导致gf无法跳转
+set noautochdir            " 不自动切换当前工作目录，可能会导致gf无法跳转
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 编码设置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 if(has('win32') || has('win64'))
-    set guifont=DroidSansMono_Nerd_Font_Mono:h12
-    "set guifont=DroidSansMono\ NF:h12
+    set guifont=DroidSansMono\ NF:h12
 elseif(has('gui_macvim'))
     set guifont=DroidSansMono\ Nerd\ Font\ Mono:h18
 else
@@ -178,6 +177,7 @@ Plug 'vim-syntastic/syntastic'          " syntastic语法检查
 Plug 'HonkW93/automatic-verilog'        " SystemVerilog Tools
 Plug 'WeiChungWu/vim-SystemVerilog'     " for sv syntax
 Plug 'yuweijun/vim-im'                  " for chinese input
+Plug 'prabirshrestha/vim-lsp'           " language server
 
 call plug#end()            
 
@@ -438,15 +438,20 @@ inoremap <unique> <F12>  <C-R>=g:Vimim_chinese()<CR>
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" 快速切换 buffer
+" register systemverilog lsp
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-nnoremap <leader>1 :b 1<CR>
-nnoremap <leader>2 :b 2<CR>
-nnoremap <leader>3 :b 3<CR>
-nnoremap <leader>4 :b 4<CR>
-nnoremap <leader>5 :b 5<CR>
-nnoremap <leader>6 :b 6<CR>
-nnoremap <leader>7 :b 7<CR>
-nnoremap <leader>8 :b 8<CR>
-nnoremap <leader>9 :b 9<CR>
+if executable('svls')
+    au User lsp_setup call lsp#register_server({
+        \ 'name': 'svls',
+        \ 'cmd': {server_info->['svls']},
+        \ 'whitelist': ['verilog', 'systemverilog'],
+        \ })
+endif
+
+augroup lsp_install
+    au!
+    " call s:on_lsp_buffer_enabled only for languages that has the server registered.
+    autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+augroup END
+
 

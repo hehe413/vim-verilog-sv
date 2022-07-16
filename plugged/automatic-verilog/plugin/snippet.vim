@@ -2,7 +2,7 @@
 " Vim Plugin for Verilog Code Automactic Generation 
 " Author:         HonkW
 " Website:        https://honk.wang
-" Last Modified:  2022/02/15 02:44
+" Last Modified:  2022/05/18 21:42
 " File:           snippet.vim
 " Note:           Snippet function partly from zhangguo's vimscript,partly from load_template
 "------------------------------------------------------------------------------
@@ -35,7 +35,7 @@ let g:_ATV_SNIPPET_DEFAULTS = {
             \'clk':         'clk',        
             \'rst':         'rst',
             \'rst_n':       'rst_n',    
-            \'att_en':      1
+            \'att_en':      0
             \}
 
 for s:key in keys(g:_ATV_SNIPPET_DEFAULTS)
@@ -145,8 +145,8 @@ endfunction
 "Update Last Modify Time{{{1
 augroup filetype_verilog
     "incase of no detection of systemverilog, don't use FileType
-    "autocmd BufWrite *.v call s:UpdateLastModifyTime()
-    "autocmd BufWrite *.sv call s:UpdateLastModifyTime()
+    autocmd BufWrite *.v call s:UpdateLastModifyTime()
+    autocmd BufWrite *.sv call s:UpdateLastModifyTime()
 augroup END
 function s:UpdateLastModifyTime() "{{{2
     let idx = 0
@@ -162,7 +162,7 @@ endfunction "}}}2
 
 "AutoTemplate{{{1
 augroup filetype_verilog
-    "autocmd BufNewFile *.v call s:AutoTemplate()
+    autocmd BufNewFile *.v call s:AutoTemplate()
 augroup END
 function s:AutoTemplate() "{{{2
     if g:atv_snippet_att_en == 0

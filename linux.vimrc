@@ -1,15 +1,15 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " automatic-verilog 变量配置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let g:atv_snippet_author=$USER
 let g:atv_snippet_author =$USER
 let g:atv_snippet_company='NB'
-let g:atv_snippet_project ='Logic'
+let g:atv_snippet_project='Logic'
 let g:atv_snippet_device =''
 let g:atv_snippet_email  =''
 let g:atv_snippet_website=''
 
 let g:atv_snippet_st_pos = 0        " 可配置生成代码段的前缀空格数
+let g:atv_crossdir_mode  = 0        "0:normal 1:filelist 2:tags
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 环境变量配置
@@ -162,7 +162,7 @@ Plug 'godlygeek/tabular'
 Plug 'tpope/vim-surround'
 Plug 'tpope/vim-commentary'
 Plug 'tpope/vim-repeat'
-Plug 'tpope/vim-endwise'
+"Plug 'tpope/vim-endwise'
 Plug 'preservim/tagbar'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
@@ -395,24 +395,40 @@ func Setfilehead()
     call append(2,  '// Copyright (c) 2022,xx Co.,Ltd.')
     call append(3,  '// All rights reserved')
     call append(4,  '//')
-    call append(5,  '// Project Name : '.expand("LDxx"))
-    call append(6,  '// Filename     : '.expand("%"))
-    call append(7,  '// Author       : '.expand("$USER"))
-    call append(8,  '// Email        : '.expand(""))
+    call append(5,  '// Project Name : '.expand(g:atv_snippet_project))
+    call append(6,  '// Filename     : '.expand("%:t"))
+    call append(7,  '// Author       : '.expand(g:atv_snippet_author))
+    call append(8,  '// Email        : '.expand(g:atv_snippet_email))
     call append(9,  '// Create       : '.strftime("%Y-%m-%d %H:%M:%S"))
     call append(10, '// Description  : ')
     call append(11, '// ')
     call append(12, '// -----------------------------------------------------------------------------')
     call append(13, '// Modification History: ')
     call append(14, '// Date         By              Version                 Change Description ')
-    call append(15, '// -----------------------------------------------------------------------------')
-    call append(16, '// ')
-    call append(17, '// ********************************************************************************')
-    call append(18, '')
+    call append(15, '// '.strftime("%Y-%m-%d").'   '.expand(g:atv_snippet_author).'            '.expand("1.0").'                     '.'initial')
+    call append(16, '// -----------------------------------------------------------------------------')
+    call append(17, '// ')
+    call append(18, '// ********************************************************************************')
+    call append(19, '')
+    call append(20, '')
+    if &filetype == 'verilog'
+        call append(line('$'), '')
+        "by normal
+        if g:atv_crossdir_mode == 0
+            call append(line('$'), '//Local Variables:')
+            call append(line('$'), '//verilog-library-directories:("." "./aaa/bbb/ccc")')
+            call append(line('$'), '//verilog-library-directories-recursive:0')
+            call append(line('$'), '//End: ')
+        "by file list
+        elseif g:atv_crossdir_mode == 1
+        "by tags
+        elseif g:atv_crossdir_mode == 2
+        endif
+    endif
 endfunc
 
 "映射F9快捷键，生成后跳转至第9行，然后使用o进入vim的插入模式
-map <F9> :call Setfilehead()<CR>:12<CR>i
+map <F9> :call Setfilehead()<CR>:20<CR>i
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " SyntasticCheck
@@ -453,5 +469,24 @@ augroup lsp_install
     " call s:on_lsp_buffer_enabled only for languages that has the server registered.
     autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
 augroup END
+
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+" log中关键字高亮
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+let b:file_suffix = expand("%:e")
+
+if b:file_suffix == "log" || b:file_suffix == "LOG" || b:file_suffix == "rpt"
+    syn keyword logLevelCritical FATAL FAILURE FAIL FAILED
+    syn keyword logLevelError ERROR ERR 
+    syn keyword logLevelWarning WARNING WARN
+    syn keyword logLevelInfo INFO
+    syn keyword logLevelPass PASS PASSED OK
+    
+    hi def link logLevelCritical Error
+    hi def link logLevelError ErrorMsg
+    hi def link logLevelWarning Debug
+    hi def link logLevelInfo String
+    hi def link logLevelPass Function
+endif
 
 

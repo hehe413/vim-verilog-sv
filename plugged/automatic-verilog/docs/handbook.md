@@ -198,8 +198,6 @@
 
 ![AlwaysDemo](https://cdn-1301954091.cos.ap-chengdu.myqcloud.com/blog/vimscript-automatic/always_demo.gif)
 
-> 当前快速always载入的模板暂不支持定制，使用方式也比较固定，后续根据使用人数可能考虑修改为自定义的方式。
-
    <details>
 
    <summary>快速always</summary>
@@ -238,48 +236,98 @@
 
 2. 自定义文字
 
-   可配置部分文字如下：
+   可配置模板文字以及模板生成后的鼠标位置：
 
-   - 部分`always`块中的`clock`参数，配置参数为`g:atv_snippet_clk`，默认配置为`'clk'`。
+   - 配置模板位置（默认位置为脚本`plugin`文件夹下的`template`文件夹）
 
-     可通过在`.vimrc(or _vimrc)`中配置相关`global`参数实现配置（假设配置时钟为`sys_clk`）。
+     - `atv_snippet_albpp_file`：默认`template`文件夹内`albpp.v`文件
+     - `atv_snippet_albpn_file`：默认`template`文件夹内`albpn.v`文件
+     - `atv_snippet_albnn_file`：默认`template`文件夹内`albnn.v`文件
+     - `atv_snippet_albn_file`：默认`template`文件夹内`albn.v`文件
+     - `atv_snippet_albp_file`：默认`template`文件夹内`albp.v`文件
+     - `atv_snippet_alb_file`：默认`template`文件夹内`alb.v`文件
 
-   ```javascript
-   let g:atv_snippet_clk = 'sys_clk'
-   ```
+     例如配置`AlBpp`的模板在如下路径：
 
-   - 部分`always`块中的`reset`参数，配置参数为`g:atv_snippet_rst`，默认配置为`'rst'`。配置方法同上。
-   - 部分`always`块中的`reset_n`参数，配置参数为`g:atv_snippet_rst_n`，默认配置为`'rst_n'`。配置方法同上。
+     ```javascript
+     let g:atv_snippet_albpp_file = '~/Desktop/template/albpp.v'
+     ```
 
-3. 前缀空格
-
-   可配置生成代码段的前缀空格数，默认为`4`。
-
-   可通过在`.vimrc(or _vimrc)`中配置相关`global`参数实现配置（假设配置为不要空格，即空格数为`0`）。
-
-   ```javascript
-   let g:atv_snippet_st_pos = 0
-   ```
-
-![AlwaysConfig](https://cdn-1301954091.cos.ap-chengdu.myqcloud.com/blog/vimscript-automatic/always_config.png)
+     `albpp.v`内容设置如下：
      
-   </details>
+     ```systemverilog
+     always@(posedge clk or posedge rst)begin
+     	if(rst==1'b1)begin
+            
+     	end
+        	else begin
+            
+        	end
+     end
+     ```
+
+   则可通过快捷键自动调用上述设置的模板。其他模板调用的使用方法相同。
+
+   - 鼠标位置
+
+     `atv_snippet_albpp_pos`：可配置`albpp.v`文件加载后鼠标所在位置。
+
+     ```javascript
+     //配置鼠标跳转至模板第4行，第13列
+     let g:atv_snippet_albpp_pos = '4,13'
+     ```
+   ```
+     
+   其他模板配置鼠标所在位置的方法类似。
+     
+   ```
+
+
+
+
+</details>
 
 ### 加载模板
 
-集成`load_template`插件。请参考[vim-scripts/load_template](https://github.com/vim-scripts/load_template)
+如有其它需要自主加载的模板，可使用[vim-scripts/load_template](https://github.com/vim-scripts/load_template)插件。
 
-### 新文件
+### 新建载入模板
 
-> 当前新文件载入的模板暂不支持定制，后续根据使用人数可能考虑添加。
+新建`.v`文件时自动载入预设模板（`AutoTemplate`）。
 
-如需要此功能请在`.vimrc(or _vimrc)`中打开如下配置（默认关闭），新建`.v`文件时自动载入预设模板（`AutoTemplate`）
+如需要此功能请在`.vimrc(or _vimrc)`中打开如下配置（默认关闭）。
 
 ```javascript
 let g:atv_snippet_att_en = 0
 ```
 
+预设模板可配置模板文字：`atv_snippet_att_file`：默认`template`文件夹内`auto_template.v`文件。
 
+- 例如配置`AutoTemplate`的模板在如下路径：
+
+  ```javascript
+  let g:atv_snippet_att_file = '~/Desktop/template/template.v'
+  ```
+
+  `template.v`内容设置如下：
+
+  ```systemverilog
+  $header
+  `timescale 1ns/1ps
+  module $module_name
+  (
+  );
+  endmodule
+  ```
+
+注意`template`有两个可选配置的特殊参数：
+
+- `$header`，在首行识别到此标识后会自动生成文件头。
+- `$module_name`，自动替换为当前文件名。
+
+模板内容均可以自定义。
+
+![AutoTemplate](https://cdn-1301954091.cos.ap-chengdu.myqcloud.com/blog/vimscript-automatic/autotemplate.gif)
 
 ## 自动例化-AutoInst
 
@@ -340,9 +388,9 @@ let g:atv_snippet_att_en = 0
    
    <summary>自动例化</summary>
 
-   - 使用菜单栏点击`AutoInst(0)`或在命令行输入`:call AutoInst(0)`确认，进行`/*autoinst*/`**当前模块**自动例化，注意例化时光标必须置于`/*autoinst*/`所在行之前的位置（即在当前行或上一行，若在当前行则必须在`/*autoinst*/`所在列之前）；
+   - 使用菜单栏点击`AutoInst(0)`或在命令行输入`:call g:AutoInst(0)`确认，进行`/*autoinst*/`**当前模块**自动例化，注意例化时光标必须置于`/*autoinst*/`所在行之前的位置（即在当前行或上一行，若在当前行则必须在`/*autoinst*/`所在列之前）；
 
-   - 使用菜单栏点击`AutoInst(1)`或在命令行输入`:call AutoInst(1)`确认，进行`/*autoinst*/`**所有模块**自动例化；
+   - 使用菜单栏点击`AutoInst(1)`或在命令行输入`:call g:AutoInst(1)`确认，进行`/*autoinst*/`**所有模块**自动例化；
    - 上述操作也可以使用快捷键完成。
    
    </details>
@@ -350,15 +398,15 @@ let g:atv_snippet_att_en = 0
 3. 快捷键
 
    <details>
-   
    <summary>快捷键</summary>
-
-   - 默认键盘快捷键为`<S-F3>`（`Shift+F3`），为避免脚本更新导致的快捷键变更，或想使用自定义快捷键，可通过在`.vimrc(or _vimrc)`中配置相关`mapping`实现覆盖配置。（假设配置为`;ati`）
-
-   ```javascript
-   map ;ati      :call AutoInst(0)<ESC>
-   ```
    
+   
+- 默认键盘快捷键为`<S-F3>`（`Shift+F3`），为避免脚本更新导致的快捷键变更，或想使用自定义快捷键，可通过在`.vimrc(or _vimrc)`中配置相关`mapping`实现覆盖配置。（假设配置为`;ati`）
+  
+```javascript
+   map ;ati      :call g:AutoInst(0)<ESC>
+```
+
    </details>
 
 4. 配置参数 
@@ -382,6 +430,7 @@ let g:atv_snippet_att_en = 0
    > - 例化时支持`verilog-95`的写法（`g:atv_autoinst_95_support`）
    > - 例化时默认不添加例化模块文件所在位置<code>dir</code>，打开此配置会在例化模块之前一行添加`//Instance`+`dir`以显示例化模块所在的文件夹地址（`g:atv_autoinst_add_dir`）
    > - 例化时若添加了例化模块文件所在位置<code>dir</code>，使用原有的环境变量（如果有，例如`$HOME`）表述而不展开为详细目录（`g:atv_autoinst_add_dir_keep`）
+   > - 例化时默认添加多`bit`信号的位宽，如不想添加，可关闭位宽添加（`g:atv_autoinst_incl_width`）
    
    可通过在`.vimrc(or _vimrc)`中配置相关`global`参数实现配置
    
@@ -400,12 +449,13 @@ let g:atv_snippet_att_en = 0
    let g:atv_autoinst_tail_nalign = 1
    let g:atv_autoinst_add_dir = 1
    let g:atv_autoinst_add_dir_keep = 1
+   let g:atv_autoinst_incl_width = 0
    ```
    
    ![ati_mark_demo](https://cdn-1301954091.cos.ap-chengdu.myqcloud.com/blog/vimscript-automatic/ati_mark_demo.gif)
-   
-   </details>
 
+   </details>
+   
 5. 重刷
 
    <details>
@@ -462,8 +512,8 @@ let g:atv_snippet_att_en = 0
    - 为避免脚本更新导致的快捷键变更，或想使用自定义快捷键，可通过在`.vimrc(or _vimrc)`中配置相关`mapping`实现覆盖配置。（假设配置为`;atp`和`;atpv`）
    
      ```javascript
-     map ;atp      :call AutoPara(0)<ESC>
-     map ;atpv     :call AutoParaValue(0)<ESC>
+     map ;atp      :call g:AutoPara(0)<ESC>
+     map ;atpv     :call g:AutoParaValue(0)<ESC>
      ```
    
    </details>
@@ -592,7 +642,7 @@ let g:atv_autopara_tail_nalign = 1
    
    <summary>自动生成</summary>
 
-   - 使用菜单栏点击`AutoReg()`或在命令行输入`:call AutoReg()`确认，在当前文本`/*autoreg*/`下方自动生成`reg`，例化时光标位置随意，只要保证当前文本含有包含`/*autoreg*/`的行即可；
+   - 使用菜单栏点击`AutoReg()`或在命令行输入`:call g:AutoReg()`确认，在当前文本`/*autoreg*/`下方自动生成`reg`，例化时光标位置随意，只要保证当前文本含有包含`/*autoreg*/`的行即可；
 
    - 上述操作也可以使用快捷键完成。
    
@@ -608,7 +658,7 @@ let g:atv_autopara_tail_nalign = 1
    默认键盘快捷键为`<S-F6>`（`Shift+F6`），为避免脚本更新导致的快捷键变更，或想使用自定义快捷键，可通过在`.vimrc(or _vimrc)`中配置相关`mapping`实现覆盖配置。（假设配置为`;atr`）
 
    ```javascript
-   map ;atr      :call AutoReg()<ESC>
+   map ;atr      :call g:AutoReg()<ESC>
    ```
    
    </details>
@@ -653,7 +703,7 @@ let g:atv_autopara_tail_nalign = 1
    
    <summary>自动生成</summary>
 
-   - 使用菜单栏点击`AutoWire()`或在命令行输入`:call AutoWire()`确认，在当前文本`/*autowire*/`下方自动生成`wire`，例化时光标位置随意，只要保证当前文本含有包含`/*autowire*/`的行即可；
+   - 使用菜单栏点击`AutoWire()`或在命令行输入`:call g:AutoWire()`确认，在当前文本`/*autowire*/`下方自动生成`wire`，例化时光标位置随意，只要保证当前文本含有包含`/*autowire*/`的行即可；
 
    - 上述操作也可以使用快捷键完成。
    
@@ -668,7 +718,7 @@ let g:atv_autopara_tail_nalign = 1
     默认键盘快捷键为`<S-F7>`（`Shift+F7`），为避免脚本更新导致的快捷键变更，或想使用自定义快捷键，可通过在`.vimrc(or _vimrc)`中配置相关`mapping`实现覆盖配置。（假设配置为`;atw`）
    
      ```javascript
-     map ;atw      :call AutoWire()<ESC>
+     map ;atw      :call g:AutoWire()<ESC>
      ```
 
     </details>
@@ -693,7 +743,7 @@ let g:atv_autopara_tail_nalign = 1
 1. 写标志为`/*autodef*/`。默认键盘快捷键为`<S-F8>`（`Shift+F8`）。为避免脚本更新导致的快捷键变更，或想使用自定义快捷键，可通过在`.vimrc(or _vimrc)`中配置相关`mapping`实现覆盖配置。（假设配置为`;atd`）
 
    ```javascript
-   map ;atd      :call AutoDef()<ESC>
+   map ;atd      :call g:AutoDef()<ESC>
    ```
    
    其余步骤及注意事项参考[AutoReg](#自动寄存器-AutoReg)与[AutoWire](#自动线网-AutoWire)。
@@ -820,7 +870,7 @@ let g:atv_autopara_tail_nalign = 1
 
    <summary>自动声明</summary>
    
-   - 使用菜单栏点击`AutoArg()`或在命令行输入`:call AutoArg()`确认，进行`/*autoarg*/`当前模块自动声明，注意例化时光标必须置于`/*autoarg*/`所在行之前的位置（即在当前行或上一行，若在当前行则必须在`/*autoarg*/`所在列之前）；
+   - 使用菜单栏点击`AutoArg()`或在命令行输入`:call g:AutoArg()`确认，进行`/*autoarg*/`当前模块自动声明，注意例化时光标必须置于`/*autoarg*/`所在行之前的位置（即在当前行或上一行，若在当前行则必须在`/*autoarg*/`所在列之前）；
 
    - 上述操作也可以使用快捷键完成。
 
@@ -835,7 +885,7 @@ let g:atv_autopara_tail_nalign = 1
    - 默认键盘快捷键为`<S-F2>`（`Shift+F2`），为避免脚本更新导致的快捷键变更，或想使用自定义快捷键，可通过在`.vimrc(or _vimrc)`中配置相关`mapping`实现覆盖配置。（假设配置为`;ata`）
 
      ```javascript
-     map ;ata      :call AutoArg()<ESC>
+     map ;ata      :call g:AutoArg()<ESC>
      ```
 
    </details>
@@ -1150,9 +1200,9 @@ let g:atv_crossdir_mode = 2    "0:normal 1:filelist 2:tags
 
 ---
 
-> 通过Rtl树观察代码结构
->
-> ⚠️注意：此功能可能存在`BUG`，请及时反馈
+> 通过`Rtl`树观察代码结构
+
+⚠️注意：此功能可能存在`BUG`，请及时反馈
 
 ![callout_rtl](https://cdn-1301954091.cos.ap-chengdu.myqcloud.com/blog/vimscript-automatic/callout_rtl.gif)
 
@@ -1195,14 +1245,37 @@ let g:atv_crossdir_mode = 2    "0:normal 1:filelist 2:tags
      在`~`，`+`位置按`<CR>`，也就是`<Enter>`，进行子模块展开/收缩
 
      按`o`，打开对应模块
-     
+
      按`i`，打开对应模块例化位置
-     
+
      按`q`，关闭`RtlTree`
-     
+
      按`r`，更新`RtlTree`（适用于在过程中新增/删除文件，新增/删除模块的时候。注意更新之后需要手动收缩/展开一次相应模块的位置才能展现效果）
-     
+
      按`?`，打开或关闭帮助信息
-     
+
      ![fastkey](https://cdn-1301954091.cos.ap-chengdu.myqcloud.com/blog/vimscript-automatic/fastkey.gif)
+
+     键盘相关操作可以配置为其他按键：
+
+     - 打开对应模块：`g:atv_rtl_open`
+     - 打开对应模块例化位置：`g:atv_rtl_inst`
+     - 关闭`RtlTree`：`g:atv_rtl_quit`
+     - 更新`RtlTree`：`g:atv_rtl_refresh`
+
+     例如配置通过`d`键打开对应模块：
+
+     ```javascript
+     let g:atv_rtl_open = "o"
+     ```
+
+### 递归搜索
+
+默认建立`Rtl`树时不会搜索整个代码结构，只会搜索当前模块下的例化模块结构。如果希望递归搜索所有代码结构，请打开如下配置：
+
+```javascript
+let g:atv_rtl_recursive = 1
+```
+
+另外，更新`RtlTree`时，总会自动进行递归调用。
 

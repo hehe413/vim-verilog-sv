@@ -2,7 +2,7 @@
 " Vim Plugin for Verilog Code Automactic Generation 
 " Author:         HonkW
 " Website:        https://honk.wang
-" Last Modified:  2022/06/14 20:47
+" Last Modified:  2022/08/01 23:55
 " File:           crossdir.vim
 " Note:           search cross directory by tags/filelist/verilog-library
 "------------------------------------------------------------------------------
@@ -141,6 +141,7 @@ endfunction
 " Description:
 "   get file-dir dictionary from filelist
 "   flist e.g.
+"       -f filelist
 "       -v lib_file
 "       -y lib_dir
 "       +libext+lib_ext
@@ -154,6 +155,7 @@ function s:GetFileDirDicFromFlist(file)
     let files = {}
     "get from filelist, no recursive
     let dirlist =[]
+    let flist = []
     let vlist = []
     let elist = []
     let rec = 0
@@ -166,12 +168,29 @@ function s:GetFileDirDicFromFlist(file)
             continue
         endif
         let matchflags = '\('.   '-y'           . '\|' .
+                                \'-f'           . '\|' .
                                 \'+incdir+'     . '\|' .
                                 \'-v'           . '\|' .
                                 \'+libext+'     . '\)'
         let flag_list = split(line,matchflags.'\(\s*[^ \-+]\+\)\{1,\}\zs')
         for flag in flag_list
-            if flag =~ '^\s*-y'
+            if flag =~ '^\s*-f'
+                let ffile = substitute(flag,'-f','','g')
+                call substitute(ffile,'\zs\S\+\ze','\=add(flist,submatch(0))','g')
+                for file in flist
+                    if file =~ '^\s*\.'                 "dir start with ./ or ../
+                        let file = flist_dir.'/'.file
+                    elseif file =~ '^\s*\S\+\/'         "dir start wich $DESIGN_ROOT/.../
+                        let file = file
+                    else                                "dir start with test.v
+                        let file = flist_dir.'/'.file
+                    endif
+                    let file = expand(file)
+                    let file = fnamemodify(file,':p')
+                    let subfiles = s:GetFileDirDicFromFlist(file)
+                    call extend (files,subfiles)
+                endfor
+            elseif flag =~ '^\s*-y'
                 let ydir = substitute(flag,'-y','','g')
                 call substitute(ydir,'\zs\S\+\ze','\=add(dirlist,submatch(0))','g')
             elseif flag =~ '^\s*+incdir+'
@@ -184,9 +203,19 @@ function s:GetFileDirDicFromFlist(file)
                 let ext = substitute(flag,'+libext+','','g')
                 call substitute(ext,'\zs\S\+\ze','\=add(elist,submatch(0))','g')
             elseif flag != ''
-                if filereadable(flist_dir.'/'.flag)
-                    let vfile = flist_dir.'/'.flag
-                    let vfile = expand(vfile)
+                "remove space from the head&tail
+                let flag = substitute(flag,'\s*$','','g')
+                let file = substitute(flag,'^\s*','','g')
+                if file =~ '^\s*\.'                 "dir start with ./ or ../
+                    let file = flist_dir.'/'.file
+                elseif file =~ '^\s*\S\+\/'         "dir start wich $DESIGN_ROOT/.../
+                    let file = file
+                else                                "dir start with test.v
+                    let file = flist_dir.'/'.file
+                endif
+                let vfile = file
+                let vfile = expand(vfile)
+                if filereadable(vfile)
                     let vfile = fnamemodify(vfile,':p')
                     let dir = fnamemodify(vfile,':p:h')
                     let file = fnamemodify(vfile,':p:t')
@@ -854,7 +883,7 @@ endfunction
 
 "SortNaturalOrder sort函数Funcref（用于sort函数排序）{{{2
 " Comparator function for natural ordering of numbers
-function s:SortNaturalOrder(firstNr, secondNr)
+function g:AutoVerilog_SortNaturalOrder(firstNr, secondNr)
   if a:firstNr < a:secondNr
     return -1
   elseif a:firstNr > a:secondNr
@@ -870,10 +899,10 @@ elseif v:version == 704
     if has("patch341") 
         let g:atv_sort_funcref = 'n'
     else
-        let g:atv_sort_funcref = 's:SortNaturalOrder'
+        let g:atv_sort_funcref = 'g:AutoVerilog_SortNaturalOrder'
     endif
 elseif v:version == 703
-    let g:atv_sort_funcref = 's:SortNaturalOrder'
+    let g:atv_sort_funcref = 'g:AutoVerilog_SortNaturalOrder'
 endif
 
 "}}}2

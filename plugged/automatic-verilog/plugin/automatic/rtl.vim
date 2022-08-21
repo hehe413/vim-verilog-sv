@@ -2,7 +2,7 @@
 " Vim Plugin for Verilog Code Automactic Generation 
 " Author:         HonkW
 " Website:        https://honk.wang
-" Last Modified:  2022/06/23 23:37
+" Last Modified:  2022/08/15 22:48
 " File:           rtl.vim
 " Note:           RtlTree function refactor from zhangguo's original script
 "------------------------------------------------------------------------------
@@ -89,6 +89,24 @@ let s:VlogKeyWords  = s:VlogTypePre . s:VlogTypePort . s:VlogTypeConn .  s:VlogT
 "Not Keywords 非关键词类型
 let s:not_keywords_pattern = s:VlogKeyWords . '\@!\(\<\w\+\>\)'
 
+"Rtl Config Rtl配置
+let g:_ATV_RTL_DEFAULTS = {
+            \'recursive':   0,
+            \'refresh':     "r",
+            \'quit':        "q",
+            \'open':        "o",
+            \'inst':        "i",
+            \'fold':        "<CR>",
+            \'ver':         "1.0"
+            \}
+for s:key in keys(g:_ATV_RTL_DEFAULTS)
+    if !exists('g:atv_rtl_' . s:key)
+        let g:atv_rtl_{s:key} = copy(g:_ATV_RTL_DEFAULTS[s:key])
+    endif
+endfor
+
+command -nargs=? -complete=file RtlTree :call <SID>RtlTree(<f-args>)
+
 "}}}1
 
 "RtlTree Rtl树{{{1
@@ -106,12 +124,22 @@ function s:oTreeNode.New() "{{{2
     let newTreeNode.unresolved = 0
     let newTreeNode.layer = -1
     let newTreeNode.fold = 1
+    let newTreeNode.child_created = 0
     return newTreeNode
 endfunction
 "}}}2
-function s:oTreeNode.CreateTree() "{{{2
+function s:oTreeNode.CreateTree(level) "{{{2
     "add parent node
-    call extend(s:rtltree,{self.iname:self})
+    call extend(s:rtltree,{self.iname : self})
+
+    "none recursive create must have 2-level because 
+    " '+' needed for children's child
+    "e.g.
+    "   ~ top
+    "     + top_child
+    if a:level == 2
+        return
+    endif
 
     "show progress
     redraw
@@ -120,9 +148,15 @@ function s:oTreeNode.CreateTree() "{{{2
     "create child node
     if self.CreateChildren() == []
         return
-    else
+    elseif g:atv_rtl_recursive == 1
+        "recursive creation
         for node in self.children
-            call node.CreateTree()
+            call node.CreateTree(0)
+        endfor
+    else
+        "none recursive creation
+        for node in self.children
+            call node.CreateTree(a:level+1)
         endfor
     endif
 endfunction
@@ -165,7 +199,7 @@ function s:oTreeNode.Expand() "{{{2
     let node = copy(self)
     "mark node as unfold
     let node.fold = 0
-    call extend(s:rtltree,{node.iname:node})
+    call extend(s:rtltree,{node.iname : node})
     call append(".",node.Draw([]))
 endfunction
 function s:oTreeNode.Draw(lines) "{{{3
@@ -204,7 +238,7 @@ function s:oTreeNode.Shrink() "{{{2
     let node = copy(self)
     "mark node as unfold
     let node.fold = 1
-    call extend(s:rtltree,{node.iname:node})
+    call extend(s:rtltree,{node.iname : node})
     let orig_idx = line(".")
     let orig_col = col(".")
     let prefix = matchstr(getline("."),'^\s*')
@@ -265,9 +299,12 @@ function s:OpenRtl(file) abort "{{{3
     let node.fname = s:rtl_top_file
     let node.children = []
     let node.layer = 0
-    call node.CreateTree()
+    let node.child_created = 1
+    call node.CreateTree(0)
+    "forbid mouse behavior change when using this plugin, possible problem here
+    let s:save_mouse = &mouse
     "Create Window for RtlTree
-    let s:RtlCurBufName = bufname()
+    let s:RtlCurBufName = bufname("%")
     let s:RtlTreeBufName = "RtlTree"."(".s:rtl_top_module.")"
     silent! exe 'aboveleft ' . 'vertical ' . s:RtlTreeWinWidth . ' new '.s:RtlTreeBufName
     execute bufwinnr(s:RtlTreeBufName) . "wincmd w"
@@ -290,11 +327,15 @@ function s:SetRtlBufOpt()
     setlocal buftype=nofile
     setlocal nospell
     setlocal nonumber
-	setlocal mouse=n
 endfunction
 function s:SetRtlBufAu()
-    execute "autocmd QuitPre <buffer> bwipeout ".s:RtlTreeBufName
+    if exists("#QuitPre")
+        execute "autocmd QuitPre <buffer> bwipeout ".s:RtlTreeBufName
+    endif
     execute "autocmd BufEnter,WinEnter <buffer> stopinsert"
+    "mouse support
+    execute "autocmd BufEnter,WinEnter ".s:RtlTreeBufName." set mouse=n"
+    execute "autocmd BufLeave,BufDelete <buffer> set mouse=".s:save_mouse
 endfunction
 function s:SetRtlBufHl()
     hi def link RtlTree Directory
@@ -330,6 +371,11 @@ function s:FoldRtl() abort "{{{3
     endif
     "expand
     if line =~ '^\s*+\s'
+        "none recursive, rtl needed create while fold
+        if g:atv_rtl_recursive==0 && node.child_created== 0
+            call node.CreateTree(0)
+            let node.child_created = 1
+        endif
         "+ -> ~
         let line = substitute(line,'\(^\s*\)+\s','\1\~ ','')
         call setline(".",line)
@@ -358,11 +404,21 @@ function s:OpenRtlInst() abort "{{{3
     else
         let curbufexist = 0
         "check if current buffer exist
-        for buf in getbufinfo()
-            if buf.name =~ fnamemodify(s:RtlCurBufName,':t') && buf.loaded == 1
-                let curbufexist = 1
-            endif
-        endfor
+        if exists("*getbufinfo") 
+            for buf in getbufinfo()
+                if buf.name =~ fnamemodify(s:RtlCurBufName,':t') && buf.loaded == 1
+                    let curbufexist = 1
+                endif
+            endfor
+        else
+            for nr in  filter(range(1,bufnr('$')),'buflisted(v:val)')
+                let bufname = bufname(nr)
+                let bufloaded = bufloaded(nr)
+                if bufname =~ fnamemodify(s:RtlCurBufName,':t') && bufloaded == 1
+                    let curbufexist = 1
+                endif
+            endfor
+        endif
         "current buffer exist, jump to window
         if curbufexist == 1
             silent! exe bufwinnr(s:RtlCurBufName)." wincmd w"
@@ -379,7 +435,7 @@ function s:OpenRtlInst() abort "{{{3
         call cursor(node.idx,1)
         call search('\w\+')
         execute "normal zz"
-        let s:RtlCurBufName = bufname()
+        let s:RtlCurBufName = bufname("%")
         execute bufwinnr(s:RtlTreeBufName)."wincmd w"
     endif
 endfunction
@@ -397,11 +453,21 @@ function s:OpenRtlModule() abort "{{{3
     else
         let curbufexist = 0
         "check if current buffer exist
-        for buf in getbufinfo()
-            if buf.name =~ fnamemodify(s:RtlCurBufName,':t') && buf.loaded == 1
-                let curbufexist = 1
-            endif
-        endfor
+        if exists("*getbufinfo") 
+            for buf in getbufinfo()
+                if buf.name =~ fnamemodify(s:RtlCurBufName,':t') && buf.loaded == 1
+                    let curbufexist = 1
+                endif
+            endfor
+        else
+            for nr in  filter(range(1,bufnr('$')),'buflisted(v:val)')
+                let bufname = bufname(nr)
+                let bufloaded = bufloaded(nr)
+                if bufname =~ fnamemodify(s:RtlCurBufName,':t') && bufloaded == 1
+                    let curbufexist = 1
+                endif
+            endfor
+        endif
         "current buffer exist, jump to window
         if curbufexist == 1
             silent! exe bufwinnr(s:RtlCurBufName)." wincmd w"
@@ -417,7 +483,7 @@ function s:OpenRtlModule() abort "{{{3
         execute "edit ".(node.fname)
         call search('^\s*module')
         execute "normal zz"
-        let s:RtlCurBufName = bufname()
+        let s:RtlCurBufName = bufname("%")
         execute bufwinnr(s:RtlTreeBufName)."wincmd w"
     endif
 endfunction
@@ -430,19 +496,17 @@ function s:CreateRtl() abort "{{{3
     let node.fname = s:rtl_top_file
     let node.children = []
     let node.layer = 0
-    call node.CreateTree()
+    let node.child_created = 1
+    "recursively refresh
+    let save_recursive = g:atv_rtl_recursive 
+    let g:atv_rtl_recursive = 1
+    call node.CreateTree(0)
+    let g:atv_rtl_recursive = save_recursive
 endfunction
 "}}}3
 "}}}2
-command -nargs=? -complete=file RtlTree :call <SID>RtlTree(<f-args>)
 
 "Rtl Help
-let g:atv_rtl_ver = "1.0"
-let g:atv_rtl_refresh = "r"
-let g:atv_rtl_quit = "q"
-let g:atv_rtl_open = "o"
-let g:atv_rtl_inst = "i"
-let g:atv_rtl_fold = "<CR>"
 function s:RtlHelp()
     let orig_idx = line(".")
     let orig_col = col(".")
@@ -553,14 +617,14 @@ function s:GetModuleInst(lines)
                     call substitute(join(module_lines),module_inst_pattern,'\=extend(value,[submatch(1),submatch(4)])','')
                     let seq = seq + 1
                     call add(value,inst_idx)
-                    call extend(module_seqs,{seq:value})
+                    call extend(module_seqs,{seq : value})
                 "module #() inst ();
                 elseif join(module_lines) =~ module_para_inst_pattern
                     let value = []
                     call substitute(join(module_lines),module_para_inst_pattern,'\=extend(value,[submatch(1),submatch(4)])','')
                     let seq = seq + 1
                     call add(value,inst_idx)
-                    call extend(module_seqs,{seq:value})
+                    call extend(module_seqs,{seq : value})
                 endif
                 let in_module = 0
                 let module_lines = []
@@ -581,14 +645,14 @@ function s:GetModuleInst(lines)
                     call substitute(join(module_lines),module_inst_pattern,'\=extend(value,[submatch(1),submatch(4)])','')
                     let seq = seq + 1
                     call add(value,inst_idx)
-                    call extend(module_seqs,{seq:value})
+                    call extend(module_seqs,{seq : value})
                 "module #() inst ();
                 elseif join(module_lines) =~ module_para_inst_pattern
                     let value = []
                     call substitute(join(module_lines),module_para_inst_pattern,'\=extend(value,[submatch(1),submatch(4)])','')
                     let seq = seq + 1
                     call add(value,inst_idx)
-                    call extend(module_seqs,{seq:value})
+                    call extend(module_seqs,{seq : value})
                 endif
                 let in_module = 0
                 let module_lines = []
@@ -625,4 +689,3 @@ endfunction
 "}}}2
 
 "}}}1
-

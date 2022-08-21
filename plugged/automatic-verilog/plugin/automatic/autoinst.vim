@@ -2,7 +2,7 @@
 " Vim Plugin for Verilog Code Automactic Generation 
 " Author:         HonkW
 " Website:        https://honk.wang
-" Last Modified:  2022/07/13 18:36
+" Last Modified:  2022/08/04 20:55
 " File:           autoinst.vim
 " Note:           AutoInst function partly from zhangguo's vimscript
 "------------------------------------------------------------------------------
@@ -66,7 +66,8 @@ let g:_ATV_AUTOINST_DEFAULTS = {
             \'95_support':  0,    
             \'tail_nalign': 0,    
             \'add_dir':     0,    
-            \'add_dir_keep':0
+            \'add_dir_keep':0,
+            \'incl_width':  1    
             \}
 for s:key in keys(g:_ATV_AUTOINST_DEFAULTS)
     if !exists('g:atv_autoinst_' . s:key)
@@ -77,10 +78,10 @@ let s:st_prefix = repeat(' ',g:atv_autoinst_st_pos)
 "}}}1
 
 "Keys 快捷键{{{1
-amenu 9998.2.1 &Verilog.AutoInst.AutoInst(0)<TAB>One                             :call AutoInst(0)<CR>
-amenu 9998.2.2 &Verilog.AutoInst.AutoInst(1)<TAB>All                             :call AutoInst(1)<CR>
-if !hasmapto(':call AutoInst(0)<ESC>')
-    map <S-F3>      :call AutoInst(0)<ESC>
+amenu 9998.2.1 &Verilog.AutoInst.AutoInst(0)<TAB>One                             :call g:AutoInst(0)<CR>
+amenu 9998.2.2 &Verilog.AutoInst.AutoInst(1)<TAB>All                             :call g:AutoInst(1)<CR>
+if !hasmapto(':call g:AutoInst(0)<ESC>')
+    map <S-F3>      :call g:AutoInst(0)<ESC>
 endif
 "}}}1
 
@@ -137,8 +138,7 @@ function! g:AutoInst(mode) abort
         "Get keep inst io & update inst io list 
         let keep_io_list = s:GetInstIO(getline(idx1,line('.')))
         let upd_io_list = s:GetInstIO(getline(line('.'),idx2))
-        "Get changed inst io names
-        let chg_io_names = s:GetChangedInstIO(getline(line('.'),idx2))
+        let chg_lines = getline(line('.'),idx2)
 
         "Get io sequences {sequence : value}
         if has_key(modules,module_name)
@@ -165,6 +165,9 @@ function! g:AutoInst(mode) abort
             echohl ErrorMsg | echo "No file with module name ".module_name." exist in cur dir ".getcwd() | echohl None
             return
         endif
+
+        "Get changed inst io names
+        let chg_io_names = s:GetChangedInstIO(chg_lines,io_names)
 
         "Remove io from io_seqs that want to be keep when autoinst
         "   value = [type, sequence, io_dir, width1, width2, signal_name, last_port, line ]
@@ -562,6 +565,7 @@ endfunction
 " Function: GetChangedInstIO
 " Input: 
 "   lines : lines to get inst IO port
+"   io_names = {signal_name : value }
 " Description:
 "   Get changed inst io port info from lines
 "   e.g
@@ -590,9 +594,10 @@ endfunction
 "                   'port_a':'port_a_o[4:0]'
 "                 }
 "---------------------------------------------------
-function s:GetChangedInstIO(lines)
+function s:GetChangedInstIO(lines,io_names)
     let idx = 0
     let cinst_names = {}
+    let io_names = copy(a:io_names)
     while idx < len(a:lines)
         let idx = idx + 1
         let idx = g:AutoVerilog_SkipCommentLine(2,idx,a:lines)  "skip pair comment line
@@ -602,10 +607,34 @@ function s:GetChangedInstIO(lines)
         let line = a:lines[idx-1]
         if line =~ '\.\s*\w\+\s*(.*)'
             let inst_name = matchstr(line,'\.\s*\zs\w\+\ze\s*(.*)')
-            let conn = matchstr(line,'\.\s*\w\+\s*(\s*\zs.\{-\}\ze\s*)')    "connection
-            let conn_name = matchstr(conn,'\w\+')                           "connection name
+            let conn = matchstr(line,'\.\s*\w\+\s*(\zs.*\ze\(\/\/.*\)\@<!)')        "connection,skip comment
+            let conn = substitute(conn,'\s*$','','')                                "delete space in the end for alignment
+            let conn_name = matchstr(conn,'\w\+')                                   "connection name
             if inst_name != conn_name
                 call extend(cinst_names,{inst_name : conn})
+            elseif has_key(io_names,inst_name)
+                let value = io_names[inst_name]
+                let type = value[0]
+                if type != 'keep' 
+                    let name = value[5]
+                    if g:atv_autoinst_incl_width == 0       "if config,never output width
+                        let width = ''
+                    elseif value[4] == 'c0'
+                        if value[3] == 'c0' 
+                            let width = ''
+                        else
+                            let width = '['.value[3].']'
+                        endif
+                    elseif value[3] != 'c0'
+                        let width = '['.value[3].':'.value[4].']'
+                    else
+                        let width = ''
+                    endif
+                    let conn_inst = name.width
+                endif
+                if conn_inst != conn
+                    call extend(cinst_names,{inst_name : conn})
+                endif
             endif
         endif
     endwhile
@@ -876,10 +905,13 @@ function s:DrawIO(io_seqs,io_list,chg_io_names)
     for seq in sort(map(keys(a:io_seqs),'str2nr(v:val)'),g:atv_sort_funcref)
         let value = a:io_seqs[seq]
         let type = value[0]
+
         if type != 'keep' 
             let name = value[5]
             "calculate maximum len of position to Draw
-            if value[4] == 'c0'
+            if g:atv_autoinst_incl_width == 0       "if config,never output width
+                let width = ''
+            elseif value[4] == 'c0'
                 if value[3] == 'c0' 
                     let width = ''
                 else
@@ -947,7 +979,9 @@ function s:DrawIO(io_seqs,io_list,chg_io_names)
             "name2bracket
             let name2bracket = repeat(' ',max_lbracket_len-len(prefix)-len(name)-len('.'))
             "width
-            if value[4] == 'c0'
+            if g:atv_autoinst_incl_width == 0       "if config,never output width
+                let width = ''
+            elseif value[4] == 'c0'
                 if value[3] == 'c0' 
                     let width = ''
                 else
@@ -1054,7 +1088,7 @@ function s:DrawIO(io_seqs,io_list,chg_io_names)
     "}}}3
 
     if lines == []
-        echohl ErrorMsg | echo "Error io_seqs input for function DrawIO! io_seqs has no input/output definition! Possibly written in verilog-95 but atv_autoinst_95_support not open " | echohl None
+        echohl ErrorMsg | echo "Error io_seqs input for function DrawIO! io_seqs has no input/output definition! Possibly written in verilog-95 but atv_autoinst_95_support not open, or bracket not match in inst list " | echohl None
     endif
 
     return lines

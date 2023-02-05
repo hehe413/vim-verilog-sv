@@ -2,7 +2,7 @@
 " Vim Plugin for Verilog Code Automactic Generation 
 " Author:         HonkW
 " Website:        https://honk.wang
-" Last Modified:  2022/07/18 16:42
+" Last Modified:  2022/12/06 23:20
 " File:           autopara.vim
 " Note:           AutoPara function self-made
 "------------------------------------------------------------------------------
@@ -62,6 +62,9 @@ amenu 9998.3.1 &Verilog.AutoPara.AutoPara(0)<TAB>One                            
 amenu 9998.3.2 &Verilog.AutoPara.AutoPara(1)<TAB>All                             :call g:AutoPara(1)<CR>
 amenu 9998.3.3 &Verilog.AutoPara.AutoParaValue(0)<TAB>One                        :call g:AutoParaValue(0)<CR>
 amenu 9998.3.4 &Verilog.AutoPara.AutoParaValue(1)<TAB>All                        :call g:AutoParaValue(1)<CR>
+amenu 9998.3.5 &Verilog.AutoPara.KillAutoPara(0)<TAB>One                         :call g:KillAutoPara(0)<CR>
+amenu 9998.3.5 &Verilog.AutoPara.KillAutoPara(1)<TAB>All                         :call g:KillAutoPara(1)<CR>
+
 if !hasmapto(':call g:AutoPara(0)<ESC>')
     map <S-F4>      :call g:AutoPara(0)<ESC>
 endif
@@ -88,7 +91,7 @@ endif
 "   para_seqs = {seq : value }
 "   para_names = {parameter_name : value }
 "---------------------------------------------------
-function! g:AutoPara(mode) abort
+function! g:AutoPara(mode)
     "Get module-file-dir dictionary
     let [files,modules] = g:AutoVerilog_GetModuleFileDirDic()
 
@@ -132,12 +135,21 @@ function! g:AutoPara(mode) abort
             let dir = files[file]
             "read file
             let lines = readfile(dir.'/'.file)
+            "reserve only module lines, in case of multiple module in same file
+            let lines = g:AutoVerilog_RsvModuleLine(lines,module_name)
             "parameter sequences
             let para_seqs = s:GetPara(lines,'seq')
             let para_names = s:GetPara(lines,'name')
         else
             echohl ErrorMsg | echo "file: ".module_name.".v does not exist in cur dir ".getcwd() | echohl None
-            return
+            if a:mode == 1
+                continue
+            elseif a:mode == 0
+                return
+            else
+                echohl ErrorMsg | echo "Error input for AutoPara(),input mode = ".a:mode| echohl None
+                return
+            endif
         endif
 
         "Remove parameter from para_seqs that want to be keep when autoinstparam
@@ -203,7 +215,7 @@ endfunction
 "   para_seqs = {seq : value }
 "   para_names = {parameter_name : value }
 "---------------------------------------------------
-function! g:AutoParaValue(mode) abort
+function! g:AutoParaValue(mode)
     "Get module-file-dir dictionary
     let [files,modules] = g:AutoVerilog_GetModuleFileDirDic()
 
@@ -240,12 +252,21 @@ function! g:AutoParaValue(mode) abort
             let dir = files[file]
             "read file
             let lines = readfile(dir.'/'.file)
+            "reserve only module lines, in case of multiple module in same file
+            let lines = g:AutoVerilog_RsvModuleLine(lines,module_name)
             "parameter sequences
             let para_seqs = s:GetPara(lines,'seq')
             let para_names = s:GetPara(lines,'name')
         else
             echohl ErrorMsg | echo "file: ".module_name.".v does not exist in cur dir ".getcwd() | echohl None
-            return
+            if a:mode == 1
+                continue
+            elseif a:mode == 0
+                return
+            else
+                echohl ErrorMsg | echo "Error input for AutoParaValue(),input mode = ".a:mode| echohl None
+                return
+            endif
         endif
 
         "Remove parameter from para_seqs that want to be keep when autoinstparam
@@ -290,6 +311,65 @@ function! g:AutoParaValue(mode) abort
     call cursor(orig_idx,orig_col)
 endfunction
 
+"}}}1
+
+"KillAutoPara Kill自动参数{{{1
+"--------------------------------------------------
+" Function: KillAutoPara
+" Input: 
+"   mode : mode for kill autopara
+" Description:
+"   autopara for inst module
+"   mode = 1, autoinstparam all parameter
+"   mode = 0, autoinstparam only one parameter
+" Output:
+"   Killed autopara code
+"---------------------------------------------------
+function! g:KillAutoPara(mode) abort
+
+    "Record current position
+    let orig_idx = line('.')
+    let orig_col = col('.')
+
+    "AutoPara all start from top line, AutoPara once start from first /*autoinstparam*/ line
+    if a:mode == 1
+        call cursor(1,1)
+    elseif a:mode == 0
+        call cursor(line('.'),1)
+    else
+        echohl ErrorMsg | echo "Error input for AutoPara(),input mode = ".a:mode| echohl None
+        return
+    endif
+
+    while 1
+        "Put cursor to /*autoinstparam*/ or /*autoinstparam_value*/ line
+        if search('\(\/\*autoinstparam\*\/\)\|\(\/\*autoinstparam_value\*\/\)','W') == 0
+            break
+        endif
+
+        "Skip comment line //
+        if getline('.') =~ '^\s*\/\/'
+            continue
+        endif
+
+        "Get module_name & inst_name
+        let [module_name,inst_name,idx1,idx2] = s:GetParaModuleName()
+
+        "Kill all contents under /*autoinstparam*/ untill inst_name
+        "Current position must be at /*autoinstparam*/ line
+        call s:KillAutoPara(inst_name)
+
+        "mode = 0, only kill autoinst once
+        if a:mode == 0
+            break
+        "mode = 1, kill autoinst all
+        endif
+    endwhile
+
+    "cursor back
+    call cursor(orig_idx,orig_col)
+
+endfunction
 "}}}1
 
 "Sub Function 辅助函数{{{1
@@ -953,30 +1033,49 @@ function s:KillAutoPara(inst_name)
     let idx = line('.')
     let line = getline(idx)
     if line =~ '/\*\<autoinstparam\>' || line =~ '/\*\<autoinstparam_value\>' 
+        let oneline = 0
+
         "if current line end with ')', one line
-        if line =~')\s*$'
-            return
-        else
-            "single line
-            if line =~ a:inst_name
-                let redundant = matchstr(line,a:inst_name.'.*$')
-                let line = substitute(line,escape(redundant,'/*'),'','')
-                call setline(idx,line)
-                call append(idx,prefix.redundant)
-                return
-            "keep current line
-            else
-                let line = substitute(line,'\*/.*$','\*/)','')
-            endif
+        "e.g. star #( /*autoinstparam*/ ) 
+        "e.g. star #( /*autoinstparam*/ .ATEST(ATEST)) 
+        if line =~ '\(\/\*autoinstparam\*\/\)'.'.*)\s*$' || 
+        \          '\(\/\*autoinstparam_value\*\/\)'.'.*)\s*$'
+            "delete contents after autoinstparam*/
+            let line = substitute(line,'\*\/.*$','*/)','')
             call setline(idx,line)
-            "if current line not end with ')', multi-line
+            "still needed to get rid of ')' before inst_name
+            let oneline = 0
+        "if current line has inst_name, one line , append inst to another line
+        "e.g. star #( /*autoinstparam*/ .ATEST(ATEST)) u_star 
+        "e.g. star #( /*autoinstparam*/ .ATEST(ATEST)) u_star (/*autoinst*/);
+        elseif line =~ '\(\/\*autoinstparam\*\/\)'.'.*)\s*'.a:inst_name || 
+        \              '\(\/\*autoinstparam_value\*\/\)'.'.*)\s*'.a:inst_name
+            let redundant = matchstr(line,a:inst_name.'.*$')
+            let line = substitute(line,escape(redundant,'/*'),'','')
+            "delete line after autoinstparam*/ "e.g. star #( /*autoinstparam*/ .ATEST(ATEST)) -->star #( /*autoinstparam*/) 
+            let line = substitute(line,'\*\/.*$','*/)','')
+            call setline(idx,line)
+            call append(idx,prefix.redundant)
+            let oneline = 1
+        "e.g. star #( /*autoinstparam*/ 
+        ") 
+        else
+            "delete contents after autoinstparam*/
+            let line = substitute(line,'\*\/.*$','*/)','')
+            call setline(idx,line)
+            "still needed to get rid of ')' before inst_name
+            let oneline = 0
+        endif
+
+        "multi-line
+        if oneline == 0
             let idx = idx + 1
             while 1
                 let line = getline(idx)
                 "end of inst
                 if line =~ a:inst_name
                     let redundant = matchstr(line,'^\s*\zs.*\ze'.a:inst_name)
-                    let line = substitute(line,redundant,'','')
+                    let line = substitute(line,escape(redundant,'/*'),'','')
                     call setline(idx,line)
                     break
                 "abnormal end
@@ -985,6 +1084,7 @@ function s:KillAutoPara(inst_name)
                     break
                 "middle
                 else
+                    "delete all contents in the middle
                     "call deletebufline('%',idx)
                     execute ':'.idx.'d'
                 endif

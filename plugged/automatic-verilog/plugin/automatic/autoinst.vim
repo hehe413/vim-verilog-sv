@@ -2,7 +2,7 @@
 " Vim Plugin for Verilog Code Automactic Generation 
 " Author:         HonkW
 " Website:        https://honk.wang
-" Last Modified:  2022/08/04 20:55
+" Last Modified:  2022/12/07 23:07
 " File:           autoinst.vim
 " Note:           AutoInst function partly from zhangguo's vimscript
 "------------------------------------------------------------------------------
@@ -80,6 +80,9 @@ let s:st_prefix = repeat(' ',g:atv_autoinst_st_pos)
 "Keys 快捷键{{{1
 amenu 9998.2.1 &Verilog.AutoInst.AutoInst(0)<TAB>One                             :call g:AutoInst(0)<CR>
 amenu 9998.2.2 &Verilog.AutoInst.AutoInst(1)<TAB>All                             :call g:AutoInst(1)<CR>
+amenu 9998.2.3 &Verilog.AutoInst.KillAutoInst(0)<TAB>One                         :call g:KillAutoInst(0)<CR>
+amenu 9998.2.4 &Verilog.AutoInst.KillAutoInst(1)<TAB>All                         :call g:KillAutoInst(1)<CR>
+
 if !hasmapto(':call g:AutoInst(0)<ESC>')
     map <S-F3>      :call g:AutoInst(0)<ESC>
 endif
@@ -103,7 +106,7 @@ endif
 "   io_seqs = {seq : value }
 "   io_names = {signal_name : value }
 "---------------------------------------------------
-function! g:AutoInst(mode) abort
+function! g:AutoInst(mode)
     "Get module-file-dir dictionary
     let [files,modules] = g:AutoVerilog_GetModuleFileDirDic()
 
@@ -146,6 +149,8 @@ function! g:AutoInst(mode) abort
             let dir = files[file]
             "read file
             let lines = readfile(dir.'/'.file)
+            "reserve only module lines, in case of multiple module in same file
+            let lines = g:AutoVerilog_RsvModuleLine(lines,module_name)
 
             "get add_dir by g:atv_crossdir_dirs e.g. F:/vim/test.v ->$VIM/test.v
             if g:atv_autoinst_add_dir_keep == 1
@@ -163,7 +168,14 @@ function! g:AutoInst(mode) abort
             let io_names = g:AutoVerilog_GetIO(lines,'name')
         else
             echohl ErrorMsg | echo "No file with module name ".module_name." exist in cur dir ".getcwd() | echohl None
-            return
+            if a:mode == 1
+                continue
+            elseif a:mode == 0
+                return
+            else
+                echohl ErrorMsg | echo "Error input for AutoInst(),input mode = ".a:mode| echohl None
+                return
+            endif
         endif
 
         "Get changed inst io names
@@ -219,14 +231,70 @@ function! g:AutoInst(mode) abort
         "mode = 0, only autoinst once
         if a:mode == 0
             break
-            "mode = 1, autoinst all
-        else
+        "mode = 1, autoinst all
         endif
 
     endwhile
 
     "Put cursor back to original position
     call cursor(orig_idx,orig_col)
+
+endfunction
+"}}}1
+
+"KillAutoInst Kill自动例化{{{1
+"--------------------------------------------------
+" Function: KillAutoInst
+" Input: 
+"   mode : mode for kill autoinst
+" Description:
+"   autoinst for inst module
+"   mode = 1, kill all autoinst instance
+"   mode = 0, kill only one autoinst instance
+" Output:
+"   Killed autoinst code
+"---------------------------------------------------
+function! g:KillAutoInst(mode) abort
+
+    "Record current position
+    let orig_idx = line('.')
+    let orig_col = col('.')
+
+    "AutoInst all start from top line, AutoInst once start from first /*autoinst*/ line
+    if a:mode == 1
+        call cursor(1,1)
+    elseif a:mode == 0
+        call cursor(line('.'),1)
+    else
+        echohl ErrorMsg | echo "Error input for KillAutoInst(),input mode = ".a:mode| echohl None
+        return
+    endif
+
+    while 1
+        "Put cursor to /*autoinst*/ line
+        if search('\/\*autoinst\*\/','W') == 0
+            break
+        endif
+
+        "Skip comment line //
+        if getline('.') =~ '^\s*\/\/'
+            continue
+        endif
+
+        "Kill all contents under /*autoinst*/
+        "Current position must be at /*autoinst*/ line
+        call s:KillAutoInst()
+
+        "mode = 0, only kill autoinst once
+        if a:mode == 0
+            break
+        "mode = 1, kill autoinst all
+        endif
+    endwhile
+
+    "cursor back
+    call cursor(orig_idx,orig_col)
+
 endfunction
 "}}}1
 
@@ -354,6 +422,10 @@ function g:AutoVerilog_GetIO(lines,mode)
                     let type = 'reg'
                 elseif line =~ '\<wire\>'
                     let type = 'wire'
+                elseif line =~ '\<real\>'
+                    let type = 'real'
+                elseif line =~ '\<logic\>'
+                    let type = 'logic'
                 endif
 
                 "io direction input/output/inout
@@ -382,7 +454,7 @@ function g:AutoVerilog_GetIO(lines,mode)
 
                 "name
                 let line = substitute(line,io_dir,'','')
-                let line = substitute(line,'\<reg\>\|\<wire\>','','')
+                let line = substitute(line,'\<reg\>\|\<wire\>\|\<real\>\|\<logic\>','','')
                 let line = substitute(line,'\[.\{-\}\]','','')
 
                 "ignore list like input [7:0] a[7:0];
@@ -797,6 +869,77 @@ function g:AutoVerilog_GetInstModuleName()
 
     return [module_name,inst_name,idx1,idx2,idx3]
 
+endfunction
+"}}}2
+
+"AutoVerilog_RsvModuleLine 删除所有Module外的行{{{2
+"--------------------------------------------------
+" Function: AutoVerilog_RsvModuleLine()
+"
+" Description:
+"   Remove lines outside specific module, reserve module lines
+"   e.g
+"   module a();
+"     uart u_uart();
+"   endmodule
+"   module b();
+"     uart #(para=2) u_uart ();
+"   endmodule
+"
+"   --->AutoVerilog_RsvModuleLine(lines,a)
+"
+" Output:
+"   module a();
+"     uart #(para=2) u_uart ();
+"   endmodule
+"---------------------------------------------------
+function g:AutoVerilog_RsvModuleLine(lines,module)
+    let find_module = 0
+    let in_module = 0
+    let multiline_module = ''
+    let proc_lines = []
+    for line in a:lines
+        "single line
+        if line =~ '^\s*module'
+            if line =~ '^\s*module'.'\s\+'.'\<'.a:module.'\>'
+                call add(proc_lines,line)
+                let in_module = 1
+            elseif line =~ '^\s*module\s*$'
+                let multiline_module = matchstr(line,'^\s*module')
+                let find_module = 1
+            else
+                call add(proc_lines,'')
+            endif
+            continue
+        endif
+        "multi line
+        if find_module == 1 && in_module == 0
+            if line =~ '^\s*'.'\<'.a:module.'\>'
+                call add(proc_lines,multiline_module)
+                call add(proc_lines,line)
+                let in_module = 1
+                continue
+            elseif line =~ '^\s*$' || line =~ '^\s*\/\/.*$'
+                call add(proc_lines,line)
+                continue
+            else
+                call add(proc_lines,'')
+            endif
+        endif
+        "endmodule
+        if in_module == 1
+            call add(proc_lines,line)
+            if line =~ 'endmodule'
+                let in_module = 0
+                continue
+            endif
+        "outisde module
+        else
+            call add(proc_lines,'')
+        endif
+    endfor
+
+    return proc_lines
 endfunction
 "}}}2
 

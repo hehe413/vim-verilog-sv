@@ -116,8 +116,8 @@ set noautochdir            " 不自动切换当前工作目录，可能会导致
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 编码设置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-if(has('win32') || has('win64'))
-    set guifont=DroidSansMono\ NF:h12
+if (has('win32') || has('win64'))
+    set guifont=DroidSansMono\ Nerd\ Font\ Mono:h12
 elseif(has('gui_macvim'))
     set guifont=DroidSansMono\ Nerd\ Font\ Mono:h18
 else
@@ -177,7 +177,6 @@ Plug 'vim-syntastic/syntastic'          " syntastic语法检查
 Plug 'HonkW93/automatic-verilog'        " SystemVerilog Tools
 Plug 'WeiChungWu/vim-SystemVerilog'     " for sv syntax
 Plug 'yuweijun/vim-im'                  " for chinese input
-Plug 'prabirshrestha/vim-lsp'           " language server
 
 call plug#end()            
 
@@ -454,28 +453,10 @@ inoremap <unique> <F12>  <C-R>=g:Vimim_chinese()<CR>
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-" register systemverilog lsp
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-if executable('svls')
-    au User lsp_setup call lsp#register_server({
-        \ 'name': 'svls',
-        \ 'cmd': {server_info->['svls']},
-        \ 'whitelist': ['verilog', 'systemverilog'],
-        \ })
-endif
-
-augroup lsp_install
-    au!
-    " call s:on_lsp_buffer_enabled only for languages that has the server registered.
-    autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
-augroup END
-
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " log中关键字高亮
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let b:file_suffix = expand("%:e")
-
-if b:file_suffix == "log" || b:file_suffix == "LOG" || b:file_suffix == "rpt"
+autocmd BufNewFile,BufRead *.log,*.LOG,*.rpt exec ":call HightLightKeyWord()"
+func HightLightKeyWord()
     syn keyword logLevelCritical FATAL FAILURE FAIL FAILED
     syn keyword logLevelError ERROR ERR 
     syn keyword logLevelWarning WARNING WARN
@@ -487,6 +468,5 @@ if b:file_suffix == "log" || b:file_suffix == "LOG" || b:file_suffix == "rpt"
     hi def link logLevelWarning Debug
     hi def link logLevelInfo String
     hi def link logLevelPass Function
-endif
-
+endfunc
 

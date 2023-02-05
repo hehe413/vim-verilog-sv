@@ -1175,18 +1175,18 @@ function s:DrawIO(io_seqs,io_list,chg_io_names)
             "empty list, default
             if io_list_empty == 1
                 if g:atv_autoinst_io_dir == 1
-                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma.' //'.io_dir
+                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma.' //'.io_dir.width
                 else
-                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma
+                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma' //'.width
                 endif
             "update list,draw io by config
             else
                 if g:atv_autoinst_io_dir == 1
-                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma.' //'.io_dir
+                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma.' //'.io_dir.width
                 else
-                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma
-                endif
-                "process //INST_NEW
+                    let line = prefix.'.'.name.name2bracket.'('.connect.width2bracket.')'.comma' //'.width
+                endif				
+				"process //INST_NEW
                 let io_idx = index(io_list,name) 
                 "name not exist in old io_list, add //INST_NEW
                 if io_idx == -1

@@ -1,15 +1,56 @@
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " automatic-verilog 变量配置
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-let g:atv_snippet_author =$USER
-let g:atv_snippet_company='NB'
-let g:atv_snippet_project='Logic'
-let g:atv_snippet_device =''
-let g:atv_snippet_email  =''
-let g:atv_snippet_website=''
+let g:atv_snippet_author 	= $USER
+let g:atv_snippet_company	= 'NB'
+let g:atv_snippet_project	= 'Logic'
+let g:atv_snippet_device 	= ''
+let g:atv_snippet_email  	= ''
+let g:atv_snippet_website	= ''
+let g:atv_snippet_st_pos 	= 0        			" 可配置生成代码段的前缀空格数
+let g:atv_snippet_albpp_pos = '4,9'
+let g:atv_snippet_albpn_pos = '4,9'
+let g:atv_snippet_albnn_pos = '4,9'
+let g:atv_snippet_albn_pos 	= '4,9'
+let g:atv_snippet_albp_pos 	= '4,9'
+let g:atv_snippet_alb_pos 	= '4,9'
+let g:atv_snippet_att_en 	= 0
+"let g:atv_snippet_att_file = '~/Desktop/template/template.v'
 
-let g:atv_snippet_st_pos = 0        " 可配置生成代码段的前缀空格数
-let g:atv_crossdir_mode  = 0        "0:normal 1:filelist 2:tags
+map app <Plug>Atv_Snippet_AlBpp;
+map apn <Plug>Atv_Snippet_AlBpn;
+map ap  <Plug>Atv_Snippet_AlBp;
+
+let g:atv_autoinst_st_pos			= 0 		" 可配置生成代码段的前缀空格数
+let g:atv_autoinst_name_pos 		= 32 
+let g:atv_autoinst_sym_pos 			= 64
+let g:atv_autoinst_io_dir 			= 1
+"let g:atv_autoinst_io_dir_name 	= 'I O IO' 	" 例化时默认自动在尾部添加io_dir，即端口类型input/output/inout
+let g:atv_autoinst_inst_new 		= 1			" 例化时默认若有端口更新，自动在该端口尾部添加//INST_NEW
+let g:atv_autoinst_inst_del 		= 1         " 例化时默认若有端口被删除，自动在所有端口例化之后添加//INST_DEL
+let g:atv_autoinst_keep_chg 		= 1         " 例化时修改过端口连线的则保留，否则自动刷新
+let g:atv_autoinst_incl_cmnt 		= 0         " 例化时默认添加//类型注释
+let g:atv_autoinst_incl_ifdef 		= 0         " 例化时默认添加`ifdef类型的宏定义，包括ifdef/elsif/else/endif
+let g:atv_autoinst_95_support 		= 1         " 例化时支持verilog-95的写法
+let g:atv_autoinst_tail_nalign 		= 0
+let g:atv_autoinst_add_dir 			= 0			" 例化时默认不添加例化模块文件所在位置dir，打开此配置会在例化模块之前一行添加//Instance+dir以显示例化模块所在的文件夹地址
+let g:atv_autoinst_add_dir_keep 	= 0         " 例化时若添加了例化模块文件所在位置dir，使用原有的环境变量（如果有，例如$HOME）表述而不展开为详细目录
+let g:atv_autoinst_incl_width 		= 1         " 例化时默认添加多bit信号的位宽，如不想添加，可关闭位宽添加
+
+let g:atv_autopara_st_pos 			= 4			" AutoPara 对齐位置
+let g:atv_autopara_name_pos 		= 32 
+let g:atv_autopara_sym_pos 			= 64
+
+let g:atv_autodef_st_pos 			= 4			" AutoReg&AutoWire&AutoDef 对齐位置
+let g:atv_autodef_name_pos 			= 32 
+let g:atv_autodef_sym_pos 			= 64
+
+let g:atv_autoarg_st_pos 			= 8			" AutoArg 对齐位置
+let g:atv_autoarg_sym_pos 			= 32 
+
+" 使用AutoInst、AutoPara、AutoParaValue、AutoWire、AutoDef、RtlTree等功能时，
+" 可能例化的模块不在当前文件夹下，而在上一层或下一层文件夹的某个位置，此时需要进行配置
+let g:atv_crossdir_mode  			= 0        	" 0:normal 1:filelist 2:tags
 
 """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 " 环境变量配置

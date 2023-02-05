@@ -1,4 +1,4 @@
-    always@(*)
-    begin
-         
-    end
+always@(*)
+begin
+     
+end
